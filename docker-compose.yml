@@ -1,0 +1,61 @@
+services:
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: enterprise_reconciliation_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: financial_data
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  minio_s3:
+    image: minio/minio
+    container_name: enterprise_s3_storage
+    environment:
+      MINIO_ROOT_USER: admin_s3
+      MINIO_ROOT_PASSWORD: password123
+    ports:
+      - "9090:9000" 
+      - "9091:9001" 
+    command: server /data --address ":9000" --console-address ":9001"
+    volumes:
+      - s3data:/data
+    restart: unless-stopped
+
+  ollama_llm:
+    image: ollama/ollama
+    container_name: enterprise_ai_auditor
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollamadata:/root/.ollama
+    restart: unless-stopped
+
+  # NEW: ORCHESTRATION LAYER
+  airflow:
+    image: apache/airflow:2.9.0
+    container_name: enterprise_airflow
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - .:/opt/airflow/project # Maps your python scripts into Airflow
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      # Installs your required python libraries right when the container boots!
+      - _PIP_ADDITIONAL_REQUIREMENTS=minio requests psycopg2-binary 
+      # Pre-configure the Postgres connection for Airflow
+      - AIRFLOW_CONN_FINANCIAL_DB=postgresql://admin:password123@postgres_db:5432/financial_data
+    command: standalone
+    depends_on:
+      - postgres_db
+      - minio_s3
+
+volumes:
+  pgdata:
+  s3data:
+  ollamadata:

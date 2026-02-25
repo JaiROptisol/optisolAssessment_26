@@ -1,0 +1,26 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Docker Volumes (Do not upload the actual databases!)
+pgdata/
+s3data/
+ollamadata/
+
+# Airflow temp files
+logs/
+airflow.cfg
+airflow.db
+webserver_config.py
+standalone_admin_password.txt
+
+# OS generated files
+.DS_Store
+
+# Ignore raw data files but allow the sample_output folder
+*.csv
+!sample_output/*.csv
+
+
+
