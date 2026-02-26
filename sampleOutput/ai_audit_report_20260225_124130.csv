@@ -1,0 +1,9 @@
+log_id,transaction_id,issue_type,description,ai_root_cause_analysis
+111,TXN_9002,Missing in Sales,Exists in Payments but not in Sales,The data discrepancy is due to a synchronization error between payment and sales systems post-transaction.
+113,TXN_9003,Amount Mismatch / NULL,"Sales Amount: 200.01, Payment Amount: 200.00",The root cause is a rounding error or truncation in the payment processing system when handling currency values to two decimal places.
+114,TXN_9004,Amount Mismatch / NULL,"Sales Amount: 5000.00, Payment Amount: 500.00",The root cause is a misconfiguration in the amount mapping between sales records and payment processing fields within the Stripe integration settings.
+117,TXN_9005,Duplicate Entry,Transaction appears multiple times in Sales staging,The root cause for the duplicate entry is a failure to implement proper transaction deduplication logic within the data processing pipeline before insertion into the Sales staging table.
+115,TXN_9006,Amount Mismatch / NULL,"Sales Amount: NULL, Payment Amount: 120.00",The root cause is a failed transaction due to insufficient credit card authorization or declined payment attempt by the issuing bank for an unrecognized amount of NULL sales recorded in the system at that time.
+116,TXN_9007,Amount Mismatch / NULL,"Sales Amount: 1015.00, Payment Amount: 1000.00",The root cause is a decimal rounding error during data entry or conversion in the payment processing system for wire transfers.
+112,TXN_9008,Missing in Sales,Exists in Payments but not in Sales,The discrepancy is due to an incomplete data transfer or synchronization failure between the Payments and Sales systems during a credit card transaction.
+110,TXN_9001,Missing in Payments,Exists in Sales but not in Payments,The root cause is likely a synchronization issue between sales and payment systems due to an unrecognized or misconfigured third-party integration.
