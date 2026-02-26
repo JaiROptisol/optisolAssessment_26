@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import logging
 import sys
-
+import os
 # 1. ENTERPRISE REFINEMENT: Robust Logging Setup
 logging.basicConfig(
     level=logging.INFO,
@@ -11,12 +11,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# 2. Database Connection Details
-DB_USER = 'admin'
-DB_PASS = 'password123'
+
+# 2. Secure Database Connection Details
+DB_USER = os.getenv('POSTGRES_USER')
+DB_PASS = os.getenv('POSTGRES_PASSWORD')
 DB_HOST = 'postgres_db'
 DB_PORT = '5432'
-DB_NAME = 'financial_data'
+DB_NAME = os.getenv('POSTGRES_DB')
+
+DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 engine = create_engine(DATABASE_URI)

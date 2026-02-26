@@ -3,9 +3,9 @@ services:
     image: postgres:15-alpine
     container_name: enterprise_reconciliation_db
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: financial_data
+      - "POSTGRES_USER=${POSTGRES_USER}"
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+      - "POSTGRES_DB=${POSTGRES_DB}"
     ports:
       - "5433:5432"
     volumes:
@@ -16,11 +16,11 @@ services:
     image: minio/minio
     container_name: enterprise_s3_storage
     environment:
-      MINIO_ROOT_USER: admin_s3
-      MINIO_ROOT_PASSWORD: password123
+      - "MINIO_ROOT_USER=${MINIO_ROOT_USER}"
+      - "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}"
     ports:
-      - "9090:9000" 
-      - "9091:9001" 
+      - "9090:9000"
+      - "9091:9001"
     command: server /data --address ":9000" --console-address ":9001"
     volumes:
       - s3data:/data
@@ -35,7 +35,6 @@ services:
       - ollamadata:/root/.ollama
     restart: unless-stopped
 
-  # NEW: ORCHESTRATION LAYER
   airflow:
     image: apache/airflow:2.9.0
     container_name: enterprise_airflow
@@ -43,17 +42,37 @@ services:
       - "8080:8080"
     volumes:
       - ./dags:/opt/airflow/dags
-      - .:/opt/airflow/project # Maps your python scripts into Airflow
+      - .:/opt/airflow/project
     environment:
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      # Installs your required python libraries right when the container boots!
-      - _PIP_ADDITIONAL_REQUIREMENTS=minio requests psycopg2-binary 
-      # Pre-configure the Postgres connection for Airflow
-      - AIRFLOW_CONN_FINANCIAL_DB=postgresql://admin:password123@postgres_db:5432/financial_data
+      - "AIRFLOW__CORE__LOAD_EXAMPLES=False"
+      - "_PIP_ADDITIONAL_REQUIREMENTS=requests==2.32.3 --extra-index-url https://elsai-core-package.optisolbusiness.com/root/elsai-prompts/ elsai-prompts==1.1.0 minio psycopg2-binary"
+
+      # Passed securely from .env
+      - "ELSAI_API_KEY=${ELSAI_API_KEY}"
+      - "ELSAI_PROJECT_ID=${ELSAI_PROJECT_ID}"
+      - "AIRFLOW_CONN_FINANCIAL_DB=${AIRFLOW_CONN_FINANCIAL_DB}"
+
+      - "MINIO_ROOT_USER=${MINIO_ROOT_USER}"
+      - "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}"
+
+      # Passed securely from .env
+      - "FALLBACK_AI_PROMPT=${FALLBACK_AI_PROMPT}"
+
+      # Database Environment Variables
+      - "POSTGRES_USER=${POSTGRES_USER}"
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+      - "POSTGRES_DB=${POSTGRES_DB}"
+
+      # Forces Airflow to create the fixed admin user on startup
+      - "_AIRFLOW_WWW_USER_CREATE=true"
+      - "_AIRFLOW_WWW_USER_USERNAME=${AIRFLOW_ADMIN_USER}"
+      - "_AIRFLOW_WWW_USER_PASSWORD=${AIRFLOW_ADMIN_PASSWORD}"
+      - "_AIRFLOW_WWW_USER_ROLE=Admin"
     command: standalone
     depends_on:
       - postgres_db
       - minio_s3
+      - ollama_llm
 
 volumes:
   pgdata:

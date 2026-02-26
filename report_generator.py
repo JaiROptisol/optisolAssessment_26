@@ -7,8 +7,11 @@ from datetime import datetime
 
 # Connect to the Airflow internal Docker network
 DB_CONFIG = {
-    "dbname": "financial_data", "user": "admin", 
-    "password": "password123", "host": "postgres_db", "port": "5432"
+    "dbname": os.getenv("POSTGRES_DB"), 
+    "user": os.getenv("POSTGRES_USER"), 
+    "password": os.getenv("POSTGRES_PASSWORD"), 
+    "host": "postgres_db", 
+    "port": "5432"
 }
 
 def generate_and_upload_reports():
@@ -53,7 +56,12 @@ def generate_and_upload_reports():
     # 3. Upload to MinIO S3
     print("Uploading reports to S3 (finance-reports bucket)...")
     minio_ip = socket.gethostbyname("minio_s3")
-    client = Minio(f"{minio_ip}:9000", access_key="admin_s3", secret_key="password123", secure=False)
+    client = Minio(
+        f"{minio_ip}:9000", 
+        access_key=os.getenv("MINIO_ROOT_USER", "admin_s3"), 
+        secret_key=os.getenv("MINIO_ROOT_PASSWORD", "password123"), 
+        secure=False
+    )
     
     # Ensure the reporting bucket exists
     if not client.bucket_exists("finance-reports"):

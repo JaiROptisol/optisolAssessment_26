@@ -7,14 +7,17 @@ from dateutil.relativedelta import relativedelta
 from minio import Minio
 import socket
 import psycopg2
+import os
 
 # 1. DEFINE THE FUNCTION FIRST
 def mark_db_state_failed(context):
     """Fires automatically if the DAG completely fails, resetting the lock."""
     print("DAG FAILED! Releasing database lock...")
     conn = psycopg2.connect(
-        dbname="financial_data", user="admin", 
-        password="password123", host="postgres_db", port="5432"
+        dbname=os.getenv("POSTGRES_DB"), 
+        user=os.getenv("POSTGRES_USER"), 
+        password=os.getenv("POSTGRES_PASSWORD"), 
+        host="postgres_db", port="5432"
     )
     cur = conn.cursor()
     # Change STARTED to FAILED so the S3 daemon can try again later
@@ -36,7 +39,12 @@ default_args = {
 
 def fetch_s3_data():
     minio_ip = socket.gethostbyname("minio_s3")
-    client = Minio(f"{minio_ip}:9000", access_key="admin_s3", secret_key="password123", secure=False)
+    client = Minio(
+        f"{minio_ip}:9000", 
+        access_key=os.getenv("MINIO_ROOT_USER"), 
+        secret_key=os.getenv("MINIO_ROOT_PASSWORD"), 
+        secure=False
+    )
     
     today = datetime.today()
     last_month = today - relativedelta(months=1)
